@@ -1,26 +1,16 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+// ─────────────────────────────────────────────
+//  App.tsx
+//  Point d'entrée de l'application
+//  Délègue toute la navigation à AppNavigator
+// ─────────────────────────────────────────────
 
-function App() {
+import { BrowserRouter } from "react-router-dom";
+import AppNavigator from "./navigation/AppNavigator";
+
+export default function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <AppNavigator />
+    </BrowserRouter>
   );
 }
-
-export default App;

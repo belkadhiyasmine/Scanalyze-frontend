@@ -4,7 +4,15 @@
 //  Affiche une métrique avec valeur et tendance
 // ─────────────────────────────────────────────
 
-import { MetricCardProps } from "../../types";
+
+interface MetricCardProps {
+  label:   string
+  value:   string
+  trend:   string
+  trendUp: boolean
+  icon:    React.ReactNode
+}
+
 
 // ─────────────────────────────────────────────
 export default function MetricCard({

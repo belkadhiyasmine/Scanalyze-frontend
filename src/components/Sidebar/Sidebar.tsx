@@ -2,19 +2,28 @@
 //  components/Sidebar/Sidebar.tsx
 //  Child Component — réutilisé dans :
 //  Dashboard, Upload, Editor, Verification
-// ─────────────────────────────────────────────
+//contient le logo , les liens de navigation et les infos utilisateur
 
+// ─────────────────────────────────────────────
+//Hook React pour naviguer entre les programmatiquement 
 import { useNavigate } from "react-router-dom";
+//les routes centralisées
 import { ROUTES } from "../../navigation/routes";
-import { SidebarProps } from "../../types";
+interface SidebarProps {
+  activeMenu:  string
+  onMenuClick: (key: string) => void
+}
 
 // ─────────────────────────────────────────────
+//activeMenu : la clé du menu actif
+//onMenuClick fonction appelé quand l'user clique un item 
+//ces deux props viennet du paren qui controle quel menu est actif 
 export default function Sidebar({ activeMenu, onMenuClick }: SidebarProps) {
   const navigate = useNavigate();
 
   // ── Items de navigation ───────────────────
   const navItems = [
-    {
+    { 
       key: "dashboard",
       label: "Dashboard",
       route: ROUTES.DASHBOARD,

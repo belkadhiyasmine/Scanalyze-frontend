@@ -1,36 +1,47 @@
-import { call, put, takeLatest } from "redux-saga/effects";
-import { loginRequest, loginSuccess, loginFailure } from "./authSlice";
+// ─────────────────────────────────────────────
+//  store/auth/authSaga.ts
+//  Modification : utilise authService
+//  au lieu de simuler l'appel API
+// ─────────────────────────────────────────────
+
+import { call, put, takeLatest }  from "redux-saga/effects"
+import { loginRequest, loginSuccess, loginFailure } from "./authSlice"
+import authService                from "../../services/authService"  // ← import du service
 
 function* handleLogin(action: ReturnType<typeof loginRequest>): Generator {
   try {
-    // TODO : remplacer par le vrai appel API
-    // const response: any = yield call(
-    //   axios.post,
-    //   "http://localhost:8000/api/auth/login",
-    //   action.payload
-    // );
+    // ✅ Appel réel via authService au lieu de la simulation
+    // call() → Saga appelle authService.login et attend la réponse
+    const response: any = yield call(
+      authService.login,   // ← fonction du service
+      action.payload       // ← { email, password }
+    )
 
-    // Simulation temporaire
-    yield call(() => new Promise((res) => setTimeout(res, 1000)));
-    const response = {
-      data: {
-        token:    "demo-token",
-        userName: "John Doe",
-        userRole: "Admin",
-      },
-    };
+    // Sauvegarde dans localStorage pour la persistance
+    // response → { token, user: { fullName, role } }
+    localStorage.setItem("token",    response.token)
+    localStorage.setItem("userName", response.user.fullName)
+    localStorage.setItem("userRole", response.user.role)
 
-    localStorage.setItem("token",    response.data.token);
-    localStorage.setItem("userName", response.data.userName);
-    localStorage.setItem("userRole", response.data.userRole);
-
-    yield put(loginSuccess(response.data));
+    // Dispatch loginSuccess → met à jour le state Redux
+    yield put(loginSuccess({
+      token:    response.token,
+      userName: response.user.fullName,
+      userRole: response.user.role,
+    }))
 
   } catch (err: any) {
-    yield put(loginFailure("Email ou mot de passe incorrect."));
+    // err.response.data.message → message d'erreur du backend
+    // Si pas de message → message générique
+    const errorMessage = err.response?.data?.message
+      || "Email ou mot de passe incorrect."
+
+    // Dispatch loginFailure → affiche l'erreur dans le formulaire
+    yield put(loginFailure(errorMessage))
   }
 }
 
+// Écoute loginRequest — annule si double clic
 export function* authSaga() {
-  yield takeLatest(loginRequest.type, handleLogin);
+  yield takeLatest(loginRequest.type, handleLogin)
 }

@@ -3,75 +3,96 @@
 //  Child Component — utilisé dans :
 //  Dashboard (tableau), Verification
 //  Affiche un badge coloré selon le statut
+//  Connecté au système de theme (light/dark)
 // ─────────────────────────────────────────────
 
-import React from "react"
+import { useTheme }        from "../../themes/ThemeContext"
+import { spacing, radius } from "../../themes/spacing"
 import { StatusBadgeProps } from "../../types"
 
-// ── Couleurs selon le statut ──────────────────
-const STATUS_CONFIG = {
-  Success: {
-    bg:    "#dcfce7",
-    color: "#15803d",
-    dot:   "#16a34a",
-  },
-  Processing: {
-    bg:    "#eff6ff",
-    color: "#1d4ed8",
-    dot:   "#2563eb",
-  },
-  Error: {
-    bg:    "#fef2f2",
-    color: "#dc2626",
-    dot:   "#ef4444",
-  },
-}
+// ─────────────────────────────────────────────
+//  TYPE DES PROPS
+// ─────────────────────────────────────────────
 
-// StatusBadgeProps = "Success" | "Processing" | "Error"
-// On l'enveloppe dans un objet Props pour pouvoir destructurer
+// On enveloppe StatusBadgeProps dans un objet
+// pour pouvoir le destructurer proprement
 type Props = {
-  status: StatusBadgeProps
+  status: StatusBadgeProps  // "Success" | "Processing" | "Error"
 }
 
 // ─────────────────────────────────────────────
+//  COMPOSANT PRINCIPAL
+// ─────────────────────────────────────────────
+
 export default function StatusBadge({ status }: Props) {
+
+  // ── Lecture du theme actif ─────────────────
+  // Retourne le theme complet (light ou dark)
+  // selon le choix sauvegardé dans localStorage
+  const { theme } = useTheme()
+
+  // Raccourci pour éviter de répéter "theme.colors" partout
+  const colors = theme.colors
+
+  // ── Config des statuts ─────────────────────
+  // Définie ici (dans le composant) car elle dépend
+  // des couleurs du theme actif (light/dark)
+  const STATUS_CONFIG = {
+
+    // ✅ Succès — vert
+    Success: {
+      bg:    colors.successBg,   // fond vert clair selon le theme
+      color: colors.success,     // texte vert selon le theme
+      dot:   colors.success,     // point vert
+    },
+
+    // 🔄 En traitement — bleu
+    Processing: {
+      bg:    colors.primaryLight, // fond bleu très clair selon le theme
+      color: colors.primary,      // texte bleu selon le theme
+      dot:   colors.primary,      // point bleu
+    },
+
+    // ❌ Erreur — rouge
+    Error: {
+      bg:    colors.errorBg,   // fond rouge clair selon le theme
+      color: colors.error,     // texte rouge selon le theme
+      dot:   colors.error,     // point rouge
+    },
+  }
+
+  // Récupère la config du statut reçu en prop
   const config = STATUS_CONFIG[status]
 
+  // ── Rendu ──────────────────────────────────
   return (
     <span
       style={{
-        ...styles.badge,
-        backgroundColor: config.bg,
-        color:           config.color,
+        display:         "inline-flex",
+        alignItems:      "center",
+        gap:             spacing[1],    // 4px — espace entre point et texte
+        padding:         `${spacing[1]} ${spacing[2]}`, // 4px 8px
+        borderRadius:    radius.full,   // 99px — forme pilule
+        backgroundColor: config.bg,     // fond selon le statut et le theme
+        color:           config.color,  // texte selon le statut et le theme
+        fontSize:        theme.fontSize.xs,      // petit texte
+        fontWeight:      theme.fontWeight.medium, // depuis typography.ts
       }}
     >
-      {/* Point coloré */}
+      {/* ── Point coloré ───────────────────────
+          Petit cercle à gauche du texte        */}
       <span
         style={{
-          ...styles.dot,
-          backgroundColor: config.dot,
+          width:           "6px",
+          height:          "6px",
+          borderRadius:    radius.round,  // 50% — cercle parfait
+          backgroundColor: config.dot,    // couleur du point selon le statut
+          flexShrink:      0,             // ne rétrécit pas
         }}
       />
+
+      {/* Texte du statut — "Success", "Processing" ou "Error" */}
       {status}
     </span>
   )
-}
-
-// ── Styles ────────────────────────────────────
-const styles: { [key: string]: React.CSSProperties } = {
-  badge: {
-    display:     "inline-flex",
-    alignItems:  "center",
-    gap:         "6px",
-    padding:     "4px 10px",
-    borderRadius: "99px",
-    fontSize:    "12px",
-    fontWeight:  "500",
-  },
-  dot: {
-    width:        "6px",
-    height:       "6px",
-    borderRadius: "50%",
-    flexShrink:   0,
-  },
 }

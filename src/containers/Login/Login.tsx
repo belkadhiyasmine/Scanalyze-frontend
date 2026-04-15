@@ -2,11 +2,6 @@
 //  containers/Login/index.tsx
 //  Page publique — seule page accessible sans connexion
 //
-//  Modifications apportées :
-//  ① Nom changé de "IIDP" → "Scanalyze"
-//  ② Logo remplacé par le nouveau logo SVG Scanalyze
-//  ③ Checkbox "Remember me" supprimé
-//
 //  Concepts utilisés :
 //  → useForm        : gestion du formulaire
 //  → useDispatch    : envoyer des actions Redux
@@ -28,24 +23,36 @@ import {
   selectToken,
 }                                   from "../../store/auth/authSelectors"
 
-import TextInput from "../../components/TextInput/TextInput"
-import Button    from "../../components/Button/Button"
-import Loader    from "../../components/Loader/Loader"
-
+import TextInput     from "../../components/TextInput/TextInput"
+import Button        from "../../components/Button/Button"
+import Loader        from "../../components/Loader/Loader"
 import logoScanalyze from "../../assets/images/logo.svg"
 
 // ── Type des données du formulaire ────────────
 interface LoginFormData {
-  email:    string
-  password: string
+  email:    string  // champ email
+  password: string  // champ mot de passe
 }
 
 // ─────────────────────────────────────────────
+//  COMPOSANT PRINCIPAL
+// ─────────────────────────────────────────────
+
 export default function Login() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
+
+  // ── Lecture du theme actif ─────────────────
   const { theme } = useTheme()
 
+  // Raccourci pour éviter de répéter "theme.colors" partout
+  const colors = theme.colors
+
+  // ── React Hook Form ────────────────────────
+  // register    : connecte chaque input au formulaire
+  // handleSubmit: valide avant d'appeler onSubmit
+  // watch       : lit la valeur d'un champ en temps réel
+  // errors      : erreurs de validation par champ
   const {
     register,
     handleSubmit,
@@ -53,32 +60,41 @@ export default function Login() {
     formState: { errors },
   } = useForm<LoginFormData>()
 
-  const isLoading  = useSelector(selectIsLoading)
-  const reduxError = useSelector(selectAuthError)
-  const token      = useSelector(selectToken)
+  // ── Lecture du state Redux ─────────────────
+  const isLoading  = useSelector(selectIsLoading)  // true pendant l'appel API
+  const reduxError = useSelector(selectAuthError)  // erreur retournée par le backend
+  const token      = useSelector(selectToken)      // token JWT si connecté
 
-  // Redirection automatique si déjà connecté
+  // ── Redirection automatique ────────────────
+  // Si token présent → utilisateur déjà connecté
+  // → redirige directement vers le Dashboard
   useEffect(() => {
     if (token) navigate(ROUTES.DASHBOARD)
   }, [token, navigate])
 
-  // Soumission du formulaire → action Redux → Saga → API
+  // ── Soumission du formulaire ───────────────
+  // Appelée par handleSubmit après validation
+  // → dispatch loginRequest → Saga → API
   const onSubmit = (data: LoginFormData) => {
     dispatch(loginRequest({ email: data.email, password: data.password }))
   }
 
+  // ── Rendu ──────────────────────────────────
   return (
-    <div style={{
-      minHeight:       "100vh",
-      backgroundColor: "var(--color-bg-app)",
-      display:         "flex",
-      alignItems:      "center",
-      justifyContent:  "center",
-      fontFamily:      "var(--font-primary)",
-      padding:         "24px 16px",
-    }}>
+    <div
+      style={{
+        minHeight:       "100vh",
+        backgroundColor: colors.bgApp,          // fond général selon le theme
+        display:         "flex",
+        alignItems:      "center",
+        justifyContent:  "center",
+        fontFamily:      theme.fontFamily.sans,  // depuis typography.ts
+        padding:         `${theme.spacing[6]} ${theme.spacing[4]}`, // 24px 16px
+      }}
+    >
 
-      {/* Loader pleine page pendant l'appel API */}
+      {/* ── Loader pleine page ─────────────────
+          Affiché par dessus tout pendant le login */}
       {isLoading && (
         <Loader
           fullPage
@@ -87,24 +103,31 @@ export default function Login() {
         />
       )}
 
-      {/* Carte centrale */}
-      <div style={{
-        backgroundColor: "var(--color-bg-surface)",
-        borderRadius:    theme.radius.xl,
-        border:          "1px solid var(--color-border)",
-        padding:         `${theme.spacing[10]} ${theme.spacing[10]}`,
-        width:           "100%",
-        maxWidth:        "440px",
-        boxShadow:       theme.shadows.lg,
-      }}>
+      {/* ── Carte centrale ─────────────────────
+          Contient logo + formulaire             */}
+      <div
+        style={{
+          backgroundColor: colors.bgSurface,          // blanc light / sombre dark
+          borderRadius:    theme.radius.xl,            // 16px — grands coins
+          border:          `1px solid ${colors.border}`,
+          padding:         theme.spacing[10],          // 40px
+          width:           "100%",
+          maxWidth:        "440px",
+          boxShadow:       theme.shadows.lg,           // ombre depuis shadows.ts
+        }}
+      >
 
-        {/* Logo + Titre */}
-        <div style={{
-          display:       "flex",
-          flexDirection: "column",
-          alignItems:    "center",
-          marginBottom:  theme.spacing[8],
-        }}>
+        {/* ── Logo + Titre ───────────────────────
+            Logo SVG centré + nom + sous-titre    */}
+        <div
+          style={{
+            display:       "flex",
+            flexDirection: "column",
+            alignItems:    "center",
+            marginBottom:  theme.spacing[8],     // 32px sous le header
+          }}
+        >
+          {/* Logo SVG Scanalyze */}
           <div style={{ marginBottom: theme.spacing[3] }}>
             <img
               src={logoScanalyze}
@@ -114,32 +137,44 @@ export default function Login() {
             />
           </div>
 
-          <h1 style={{
-            fontSize:      theme.fontSize.xxl,
-            fontWeight:    theme.fontWeight.bold,
-            color:         "var(--color-text-primary)",
-            margin:        `0 0 ${theme.spacing[1]}`,
-            letterSpacing: theme.letterSpacing.wide,
-          }}>
+          {/* Nom de l'application */}
+          <h1
+            style={{
+              fontSize:      theme.fontSize.xxl,
+              fontWeight:    theme.fontWeight.bold,
+              color:         colors.textPrimary,       // foncé selon le theme
+              margin:        `0 0 ${theme.spacing[1]}`,
+              letterSpacing: theme.letterSpacing.wide,
+            }}
+          >
             Scanalyze
           </h1>
 
-          <p style={{
-            fontSize: theme.fontSize.md,
-            color:    theme.colors.primary,
-            margin:   0,
-          }}>
+          {/* Sous-titre */}
+          <p
+            style={{
+              fontSize: theme.fontSize.md,
+              color:    colors.primary,                // bleu selon le theme
+              margin:   0,
+            }}
+          >
             Intelligent Document Processing
           </p>
         </div>
 
-        {/* Formulaire */}
+        {/* ── Formulaire ─────────────────────────
+            Email + Password + erreur + bouton    */}
         <form
           onSubmit={handleSubmit(onSubmit)}
-          style={{ display: "flex", flexDirection: "column", gap: theme.spacing[5] }}
+          style={{
+            display:       "flex",
+            flexDirection: "column",
+            gap:           theme.spacing[5],     // 20px entre les champs
+          }}
         >
 
-          {/* Champ Email — register gère onChange seul */}
+          {/* Champ Email */}
+          {/* register() injecte onChange, onBlur, name, ref automatiquement */}
           <TextInput
             label="Email or Username"
             type="email"
@@ -156,7 +191,7 @@ export default function Login() {
             })}
           />
 
-          {/* Champ Password — register gère onChange seul */}
+          {/* Champ Password */}
           <TextInput
             label="Password"
             type="password"
@@ -170,16 +205,20 @@ export default function Login() {
             })}
           />
 
-          {/* Erreur retournée par le backend via Redux */}
+          {/* ── Erreur backend ─────────────────────
+              Affichée si Redux retourne une erreur
+              ex : "Email ou mot de passe incorrect" */}
           {reduxError && (
-            <div style={{
-              fontSize:        theme.fontSize.sm,
-              color:           "var(--color-error)",
-              backgroundColor: "var(--color-error-bg)",
-              border:          "1px solid var(--color-error)",
-              borderRadius:    theme.radius.md,
-              padding:         `${theme.spacing[2]} ${theme.spacing[3]}`,
-            }}>
+            <div
+              style={{
+                fontSize:        theme.fontSize.sm,
+                color:           colors.error,          // rouge selon le theme
+                backgroundColor: colors.errorBg,        // fond rouge clair
+                border:          `1px solid ${colors.error}`,
+                borderRadius:    theme.radius.md,        // 8px
+                padding:         `${theme.spacing[2]} ${theme.spacing[3]}`, // 8px 12px
+              }}
+            >
               ⚠️ {reduxError}
             </div>
           )}
@@ -196,18 +235,21 @@ export default function Login() {
 
         </form>
 
-        {/* Lien vers Sign Up */}
-        <p style={{
-          textAlign:    "center",
-          fontSize:     theme.fontSize.md,
-          color:        "var(--color-text-secondary)",
-          marginTop:    theme.spacing[6],
-          marginBottom: 0,
-        }}>
+        {/* ── Lien Sign Up ───────────────────────
+            Redirige vers la page d'inscription   */}
+        <p
+          style={{
+            textAlign:    "center",
+            fontSize:     theme.fontSize.md,
+            color:        colors.textSecondary,    // gris selon le theme
+            marginTop:    theme.spacing[6],        // 24px
+            marginBottom: 0,
+          }}
+        >
           Don't have an account?{" "}
           <span
             style={{
-              color:      theme.colors.primary,
+              color:      colors.primary,           // bleu selon le theme
               fontWeight: theme.fontWeight.bold,
               cursor:     "pointer",
             }}

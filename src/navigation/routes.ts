@@ -32,7 +32,7 @@ export const ROUTES = {
   EDITOR:       "/editor",       // édition des données extraites
   VERIFICATION: "/verification", // validation des documents scannés
   EXPORT:       "/export",       // export JSON / CSV / XML
-
+  USER_MANAGEMENT: "/admin/users",
   // ── Page par défaut ──────────────────────────
   // Quand l'user va sur "/" → redirigé vers /login
   // déclaré dans AppNavigator : <Navigate to={ROUTES.LOGIN} />

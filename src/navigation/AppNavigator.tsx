@@ -8,101 +8,67 @@
 //  → SignUp est privée (Admin seulement)
 // ─────────────────────────────────────────────
 
-// Routes    → le conteneur qui lit l'URL et choisit quelle Route afficher
-// Route     → associe un chemin URL à un composant React
-// Navigate  → redirige automatiquement vers une autre URL
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom"
+import { ROUTES }                  from "./routes"
+import PrivateRoute                from "./PrivateRoute"
 
-// ROUTES → objet centralisé qui contient tous les chemins
-// ex: ROUTES.LOGIN = "/login", ROUTES.DASHBOARD = "/dashboard"
-// on n'écrit jamais les chemins en dur dans le code
-import { ROUTES } from "./routes";
+// ── Pages publiques ───────────────────────────
+import Login          from "../containers/Login/Login"
 
-// Composant wrapper qui vérifie si l'user est connecté
-// Si oui → affiche la page | Si non → redirige vers /login
-import PrivateRoute from "./PrivateRoute";
+// ── Pages privées ─────────────────────────────
+import SignUp         from "../containers/SignUp/SignUp"
+import Dashboard      from "../containers/Dashboard/Dashboard"
+import Upload         from "../containers/Upload/Upload"
+import Editor         from "../containers/Editor/Editor"
+import Verification   from "../containers/Verification/Verification"
+import DataExport     from "../containers/DataExport/DataExport"
 
-// ─────────────────────────────────────────────
-// Pages publiques — accessibles SANS connexion
-// ─────────────────────────────────────────────
+// ── Pages Admin uniquement ────────────────────
+// UserManagement → accessible uniquement aux admins
+// protégée par PrivateRoute comme les autres pages privées
+// la restriction admin est gérée dans la page elle-même
+// via AdminRoute ou via la Sidebar (lien visible admin only)
+import UserManagement from "../containers/UserManagement/UserManagement"
 
-// Seule page publique de l'app
-import Login from "../containers/Login/Login";
-
-// ─────────────────────────────────────────────
-// Pages privées — accessibles AVEC connexion uniquement
-// ─────────────────────────────────────────────
-
-// Page de création de compte — réservée à l'Admin
-import SignUp       from "../containers/SignUp/SignUp";
-
-// Page d'accueil après connexion — métriques et tableau
-import Dashboard    from "../containers/Dashboard/Dashboard";
-
-// Page d'upload de documents PDF
-import Upload       from "../containers/Upload/Upload";
-
-// Page d'édition des données extraites
-import Editor       from "../containers/Editor/Editor";
-
-// Page de vérification et validation des documents
-import Verification from "../containers/Verification/Verification";
-
-// Page d'export des données en JSON / CSV / XML
-import DataExport   from "../containers/DataExport/DataExport";
-
-// ─────────────────────────────────────────────
-// Composant principal — déclare toutes les routes
 // ─────────────────────────────────────────────
 export default function AppNavigator() {
   return (
-    // Routes → lit l'URL du navigateur et affiche
-    // la première Route dont le path correspond
     <Routes>
 
       {/* ── Route par défaut ── */}
-      {/* Quand l'user va sur "/" → redirige vers "/login" */}
-      {/* replace → remplace l'entrée dans l'historique    */}
-      {/* au lieu d'en ajouter une nouvelle                */}
+      {/* "/" → redirige vers "/login" */}
       <Route
-        path={ROUTES.DEFAULT}  // "/"
+        path={ROUTES.DEFAULT}
         element={<Navigate to={ROUTES.LOGIN} replace />}
       />
 
       {/* ══════════════════════════════════════
            PAGE PUBLIQUE
-           Seul Login est accessible sans connexion
           ══════════════════════════════════════ */}
 
-      {/* URL "/login" → affiche le composant Login */}
-      {/* Pas de PrivateRoute → accessible sans token */}
+      {/* "/login" → accessible sans connexion */}
       <Route
-        path={ROUTES.LOGIN}    // "/login"
+        path={ROUTES.LOGIN}
         element={<Login />}
       />
 
       {/* ══════════════════════════════════════
-           PAGES PRIVÉES
-           Toutes nécessitent une connexion
-           SignUp → réservé à l'Admin
+           PAGES PRIVÉES — nécessitent un token
           ══════════════════════════════════════ */}
 
-      {/* URL "/signup" → réservé Admin */}
-      {/* PrivateRoute vérifie le token ET le rôle Admin */}
+      {/* "/signup" → création de compte (Admin only) */}
       <Route
-        path={ROUTES.SIGNUP}   // "/signup"
+        path={ROUTES.SIGNUP}
         element={
-          // PrivateRoute entoure SignUp comme un gardien
-          // Si pas connecté → redirect /login
           <PrivateRoute>
-            <SignUp />         {/* affiché seulement si connecté */}
+            <SignUp />
           </PrivateRoute>
         }
       />
 
-      {/* URL "/dashboard" → page principale après login */}
+      {/* "/dashboard" → page d'accueil après login */}
       <Route
-        path={ROUTES.DASHBOARD}  // "/dashboard"
+        path={ROUTES.DASHBOARD}
         element={
           <PrivateRoute>
             <Dashboard />
@@ -110,9 +76,9 @@ export default function AppNavigator() {
         }
       />
 
-      {/* URL "/upload" → upload de documents */}
+      {/* "/upload" → upload de documents */}
       <Route
-        path={ROUTES.UPLOAD}   // "/upload"
+        path={ROUTES.UPLOAD}
         element={
           <PrivateRoute>
             <Upload />
@@ -120,9 +86,9 @@ export default function AppNavigator() {
         }
       />
 
-      {/* URL "/editor" → édition des données extraites */}
+      {/* "/editor" → édition des données extraites */}
       <Route
-        path={ROUTES.EDITOR}   // "/editor"
+        path={ROUTES.EDITOR}
         element={
           <PrivateRoute>
             <Editor />
@@ -130,9 +96,9 @@ export default function AppNavigator() {
         }
       />
 
-      {/* URL "/verification" → validation des documents */}
+      {/* "/verification" → validation des documents */}
       <Route
-        path={ROUTES.VERIFICATION}  // "/verification"
+        path={ROUTES.VERIFICATION}
         element={
           <PrivateRoute>
             <Verification />
@@ -140,9 +106,9 @@ export default function AppNavigator() {
         }
       />
 
-      {/* URL "/export" → export des données */}
+      {/* "/export" → export des données */}
       <Route
-        path={ROUTES.EXPORT}   // "/export"
+        path={ROUTES.EXPORT}
         element={
           <PrivateRoute>
             <DataExport />
@@ -150,15 +116,26 @@ export default function AppNavigator() {
         }
       />
 
+      {/* "/admin/users" → gestion des utilisateurs
+          Accessible uniquement aux admins
+          PrivateRoute vérifie le token
+          La Sidebar cache le lien aux non-admins */}
+      <Route
+        path={ROUTES.USER_MANAGEMENT}
+        element={
+          <PrivateRoute>
+            <UserManagement />
+          </PrivateRoute>
+        }
+      />
+
       {/* ── Route inconnue (404) ── */}
-      {/* Si l'URL ne correspond à aucune route déclarée  */}
-      {/* ex: "/abc", "/blabla" → redirige vers "/login"  */}
-      {/* * = wildcard = "tout ce qui n'a pas matché"     */}
+      {/* Toute URL inconnue → redirige vers "/login" */}
       <Route
         path="*"
         element={<Navigate to={ROUTES.LOGIN} replace />}
       />
 
     </Routes>
-  );
+  )
 }

@@ -16,6 +16,7 @@
 // ─────────────────────────────────────────────
 
 import { useState }             from "react"
+//useNavigate donne l'accés à une fonction navigate() pour changer de page sans recharger le navigateur 
 import { useNavigate }          from "react-router-dom"
 import { useTheme }             from "../../themes/ThemeContext"
 import { ROUTES }               from "../../navigation/routes"
@@ -26,7 +27,9 @@ import Loader                   from "../../components/Loader/Loader"
 import logoScanalyze from "../../assets/images/logo.svg"
 
 export default function SignUp() {
+  //fonction pour naviguer vers une autre route
   const navigate  = useNavigate()
+  //objet avec toute les valeurs de design
   const { theme } = useTheme()
 
   // ── États des champs ──────────────────────
@@ -41,6 +44,7 @@ export default function SignUp() {
   const [error,           setError]           = useState<string>("")
 
   // ── Validation des champs ─────────────────
+  //fontion d'erreur qui retourne une string : le msg d'erreur si un champs est invalide
   const validate = (): string => {
     if (!fullName || !email || !password || !confirmPassword || !role)
       return "Veuillez remplir tous les champs."

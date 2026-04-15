@@ -28,19 +28,19 @@ import Loader   from "../../components/Loader/Loader"
 import { ROUTES }        from "../../navigation/routes"
 import { ExportFormat }  from "../../types"
 
-// ─────────────────────────────────────────────
+// ─declaration du composant Upload ------------
 export default function Upload() {
-  const navigate  = useNavigate()
+  const navigate  = useNavigate()    //pour changer la page 
   const { theme } = useTheme()
 
   // ── États ────────────────────────────────────
-  const [activeMenu,    setActiveMenu]    = useState<string>("upload")
-  const [dragOver,      setDragOver]      = useState<boolean>(false)     // survol drag&drop
+  const [activeMenu,    setActiveMenu]    = useState<string>("upload")    //menu actif dans Sidebar
+  const [dragOver,      setDragOver]      = useState<boolean>(false)     // survol drag&drop   detecte si on est en train de glisser un fichier 
   const [selectedFile,  setSelectedFile]  = useState<File | null>(null)  // fichier choisi
-  const [outputFormat,  setOutputFormat]  = useState<ExportFormat>("JSON")
-  const [showToast,     setShowToast]     = useState<boolean>(false)
-  const [toastMsg,      setToastMsg]      = useState<string>("")
-  const [isUploading,   setIsUploading]   = useState<boolean>(false)
+  const [outputFormat,  setOutputFormat]  = useState<ExportFormat>("JSON")   //format de sortie choisi
+  const [showToast,     setShowToast]     = useState<boolean>(false)  //gestion des notifications 
+  const [toastMsg,      setToastMsg]      = useState<string>("")  //gestion des notif
+  const [isUploading,   setIsUploading]   = useState<boolean>(false)  //indique si upload en cours (affiche loader)
 
   // useRef → référence directe vers l'input file caché dans le DOM
   // Permet de déclencher le clic programmatiquement

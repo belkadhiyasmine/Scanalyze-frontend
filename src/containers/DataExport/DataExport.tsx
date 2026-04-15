@@ -1,190 +1,251 @@
 // ─────────────────────────────────────────────
 //  containers/DataExport/DataExport.tsx
-//  Page privée — Parent Component
-//  Rôle : exporter les données extraites
-//         en JSON, CSV ou XML
-//  Composants enfants :
-//  → Sidebar : navigation
-//  → Button  : boutons export + nouveau doc
-//  → Loader  : spinner pendant l'export
-//  Hooks :
-//  → useState  : format sélectionné, état export
-//  → useTheme  : theme actif
+//  Page privée — export des données extraites
+//  Connecté au système de theme (light/dark)
 // ─────────────────────────────────────────────
 
-import { useState }     from "react"
-import { useNavigate }  from "react-router-dom"
-import { useTheme }     from "../../themes/ThemeContext"
+import { useState }    from "react"
+import { useNavigate } from "react-router-dom"
+import { useTheme }    from "../../themes/ThemeContext"
 
-// ── Composants ────────────────────────────────
-import Sidebar  from "../../components/Sidebar/Sidebar"
-import Button   from "../../components/Button/Button"
-import Loader   from "../../components/Loader/Loader"
+import Sidebar from "../../components/Sidebar/Sidebar"
+import Button  from "../../components/Button/Button"
+import Loader  from "../../components/Loader/Loader"
+import Toast   from "../../components/Toast/Toast"
 
-// ── Navigation + Types ────────────────────────
-import { ROUTES }        from "../../navigation/routes"
-import { ExportFormat }  from "../../types"
+import { ROUTES } from "../../navigation/routes"
 
-// ── Données fictives (à remplacer par API) ────
+// ─────────────────────────────────────────────
+//  DONNÉES SIMULÉES
+//  Remplacées plus tard par les vraies données
+//  retournées par le pipeline OCR
+// ─────────────────────────────────────────────
+
 const EXPORT_PREVIEW = {
-  document_id:    "Invoice_X182",
-  vendor_name:    "Global Logistics Inc.",
-  invoice_number: "INV-2023-094",
-  invoice_date:   "2023-10-14",
-  currency:       "USD",
-  subtotal:       57.5,
-  tax:            0,
-  total:          57.5,
-  line_items: [
-    { description: "Shipping & Handling",  qty: 1, price: 45.0, total: 45.0 },
-    { description: "Express Delivery Fee", qty: 1, price: 12.5, total: 12.5 },
-  ],
-  validation_status: "approved",
-  exported_by:       "user_admin",
+  document_id:       "Invoice_X182",
+  vendor_name:       "Acme Corp International",
+  invoice_number:    "INV-2023-094",
+  invoice_date:      "2023-10-24",
+  currency:          "USD",
+  total:             1253.00,
+  validation_status: "Approved",
 }
 
 // ─────────────────────────────────────────────
+//  COMPOSANT PRINCIPAL
+// ─────────────────────────────────────────────
+
 export default function DataExport() {
-  const navigate  = useNavigate()
+  const navigate = useNavigate()
+
+  // ── Lecture du theme actif ─────────────────
+  // Retourne le theme complet (light ou dark)
+  // selon le choix sauvegardé dans localStorage
   const { theme } = useTheme()
 
-  // ── États ────────────────────────────────────
-  const [activeMenu,      setActiveMenu]      = useState<string>("export")
-  const [selectedFormat,  setSelectedFormat]  = useState<ExportFormat>("JSON")
-  const [isExporting,     setIsExporting]     = useState<boolean>(false)
-  const [exported,        setExported]        = useState<boolean>(false)  // succès export
+  // Raccourci pour éviter de répéter "theme.colors" partout
+  const colors = theme.colors
 
-  // ── Génère le contenu selon le format ────────
-  // Appelé à chaque changement de format
-  const getPreviewContent = (): string => {
-    if (selectedFormat === "JSON") {
-      return JSON.stringify(EXPORT_PREVIEW, null, 2)  // JSON indenté
-    }
-    if (selectedFormat === "CSV") {
-      // Format CSV : headers + valeurs séparées par virgules
-      const headers = "document_id,vendor_name,invoice_number,invoice_date,currency,total"
-      const values  = `${EXPORT_PREVIEW.document_id},${EXPORT_PREVIEW.vendor_name},${EXPORT_PREVIEW.invoice_number},${EXPORT_PREVIEW.invoice_date},${EXPORT_PREVIEW.currency},${EXPORT_PREVIEW.total}`
-      return `${headers}\n${values}`
-    }
-    // XML — balises autour de chaque valeur
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<invoice>
-  <document_id>${EXPORT_PREVIEW.document_id}</document_id>
-  <vendor_name>${EXPORT_PREVIEW.vendor_name}</vendor_name>
-  <invoice_number>${EXPORT_PREVIEW.invoice_number}</invoice_number>
-  <invoice_date>${EXPORT_PREVIEW.invoice_date}</invoice_date>
-  <currency>${EXPORT_PREVIEW.currency}</currency>
-  <total>${EXPORT_PREVIEW.total}</total>
-</invoice>`
-  }
+  // ─────────────────────────────────────────
+  //  STATES
+  // ─────────────────────────────────────────
 
-  // ── Export → téléchargement fichier ──────────
+  // Menu actif dans la Sidebar — "export" car on est sur cette page
+  const [activeMenu,  setActiveMenu]  = useState("export")
+
+  // true pendant l'export → affiche Loader pleine page
+  const [isExporting, setIsExporting] = useState(false)
+
+  // true après export réussi → affiche Toast + badge succès
+  const [exported,    setExported]    = useState(false)
+
+  // ─────────────────────────────────────────
+  //  EXPORT
+  //  Simule un appel API puis affiche
+  //  le toast de succès
+  // ─────────────────────────────────────────
+
   const handleExport = async () => {
     setIsExporting(true)
     try {
-      // TODO : remplacer par le vrai appel API
-      // await axios.post("/api/documents/export", { documentId: EXPORT_PREVIEW.document_id, format: selectedFormat })
-
-      await new Promise((res) => setTimeout(res, 1200))
-
-      // Crée un lien de téléchargement temporaire
-      const blob = new Blob([getPreviewContent()], { type: "text/plain" })
-      const url  = URL.createObjectURL(blob)       // crée une URL temporaire
-      const a    = document.createElement("a")     // crée un lien <a>
-      a.href     = url
-      a.download = `${EXPORT_PREVIEW.document_id}.${selectedFormat.toLowerCase()}`
-      a.click()                                    // déclenche le téléchargement
-      URL.revokeObjectURL(url)                     // libère la mémoire
-
-      setExported(true)   // affiche le badge de succès
+      // Simule 1 seconde d'appel API
+      // À remplacer par un vrai appel axios
+      await new Promise(res => setTimeout(res, 1000))
+      setExported(true)   // affiche Toast + badge
     } catch {
-      alert("Erreur lors de l'export. Réessayez.")
+      alert("Erreur lors de l'export.")
     } finally {
       setIsExporting(false)
     }
   }
 
-  // ── Rendu ─────────────────────────────────────
+  // ─────────────────────────────────────────
+  //  RENDU
+  // ─────────────────────────────────────────
+
   return (
-    <div style={{
-      display:         "flex",
-      minHeight:       "100vh",
-      backgroundColor: "var(--color-bg-app)",
-      fontFamily:      "var(--font-primary)",
-    }}>
+    <div
+      style={{
+        display:         "flex",
+        minHeight:       "100vh",
+        backgroundColor: colors.bgApp,          // fond général selon le theme
+        fontFamily:      theme.fontFamily.sans,  // depuis typography.ts
+      }}
+    >
 
-      {/* ── Loader pleine page pendant l'export ── */}
-      {isExporting && <Loader fullPage label="Export en cours..." />}
+      {/* ── Loader pleine page ─────────────────
+          Affiché par dessus tout pendant
+          l'export                               */}
+      {isExporting && (
+        <Loader fullPage label="Export en cours..." />
+      )}
 
-      {/* ── Sidebar ── */}
+      {/* ── Toast succès ───────────────────────
+          Notification en bas à droite
+          après export réussi                   */}
+      {exported && (
+        <Toast
+          message="Export réussi !"
+          onClose={() => setExported(false)}
+        />
+      )}
+
+      {/* ── Sidebar ────────────────────────────
+          Navigation latérale — même que
+          Dashboard, Editor, Verification       */}
       <Sidebar
         activeMenu={activeMenu}
-        onMenuClick={(menu: string) => setActiveMenu(menu)}
+        onMenuClick={setActiveMenu}
       />
 
-      {/* ── Contenu principal ── */}
-      <main style={{ flex: 1, padding: `${theme.spacing[6]} ${theme.spacing[8]}` }}>
+      {/* ── Contenu principal ──────────────────*/}
+      <main
+        style={{
+          flex:          1,
+          padding:       `${theme.spacing[6]} ${theme.spacing[8]}`, // 24px 32px
+          display:       "flex",
+          flexDirection: "column",
+          gap:           theme.spacing[5],    // 20px entre les sections
+        }}
+      >
 
-        {/* Breadcrumb */}
-        <div style={{ display: "flex", alignItems: "center", gap: theme.spacing[1], fontSize: theme.fontSize.sm, color: "var(--color-text-secondary)", marginBottom: theme.spacing[4] }}>
+        {/* ── Breadcrumb ─────────────────────────
+            Fil d'Ariane — indique où on est     */}
+        <div
+          style={{
+            display:    "flex",
+            alignItems: "center",
+            gap:        theme.spacing[1],     // 4px
+            fontSize:   theme.fontSize.sm,
+            color:      colors.textSecondary,
+          }}
+        >
           <span>🏠 Home</span>
-          <span style={{ color: "var(--color-border-strong)" }}>›</span>
-          <span style={{ color: "var(--color-text-primary)", fontWeight: theme.fontWeight.medium }}>Data Export</span>
+          <span style={{ color: colors.borderStrong }}>›</span>
+          <span
+            style={{
+              color:      colors.textPrimary,
+              fontWeight: theme.fontWeight.medium,
+            }}
+          >
+            Data Export
+          </span>
         </div>
 
-        {/* En-tête + badge succès */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: theme.spacing[6] }}>
+        {/* ── En-tête ────────────────────────────
+            Titre + badge succès (si exporté)    */}
+        <div
+          style={{
+            display:        "flex",
+            justifyContent: "space-between",
+            alignItems:     "flex-start",
+          }}
+        >
           <div>
-            <h1 style={{ fontSize: theme.fontSize.xxl, fontWeight: theme.fontWeight.extrabold, color: "var(--color-text-primary)", margin: `0 0 ${theme.spacing[1]}`, letterSpacing: theme.letterSpacing.wide }}>
+            <h1
+              style={{
+                fontSize:      theme.fontSize.xxl,
+                fontWeight:    theme.fontWeight.bold,
+                color:         colors.textPrimary,
+                margin:        `0 0 ${theme.spacing[1]}`,
+                letterSpacing: theme.letterSpacing.wide,
+              }}
+            >
               DATA EXPORT
             </h1>
-            <p style={{ fontSize: theme.fontSize.md, color: "var(--color-text-secondary)", margin: 0 }}>
-              Export your extracted document data in your preferred format.
+            <p
+              style={{
+                fontSize: theme.fontSize.md,
+                color:    colors.textSecondary,
+                margin:   0,
+              }}
+            >
+              Export your extracted document data.
             </p>
           </div>
 
-          {/* Badge succès — affiché après export réussi */}
+          {/* Badge succès — visible après export réussi */}
           {exported && (
-            <div style={{
-              backgroundColor: "var(--color-success-bg)",
-              border:          `1px solid var(--color-success)`,
-              color:           "var(--color-success)",
-              borderRadius:    theme.radius.md,
-              padding:         `${theme.spacing[2]} ${theme.spacing[4]}`,
-              fontSize:        theme.fontSize.sm,
-              fontWeight:      theme.fontWeight.semibold,
-            }}>
+            <div
+              style={{
+                backgroundColor: colors.successBg,           // fond vert clair
+                border:          `1px solid ${colors.success}`,
+                color:           colors.success,             // texte vert
+                borderRadius:    theme.radius.md,            // 8px
+                padding:         `${theme.spacing[2]} ${theme.spacing[4]}`, // 8px 16px
+                fontSize:        theme.fontSize.sm,
+                fontWeight:      theme.fontWeight.semibold,
+              }}
+            >
               ✅ Export successful !
             </div>
           )}
         </div>
 
-        {/* ── Layout 2 colonnes ── */}
-        <div style={{
-          display:             "grid",
-          gridTemplateColumns: "1fr 1.4fr",   // colonne droite plus large
-          gap:                 theme.spacing[5],
-        }}>
+        {/* ── Layout 2 colonnes ──────────────────
+            Gauche : résumé + boutons
+            Droite : preview du fichier          */}
+        <div
+          style={{
+            display:             "grid",
+            gridTemplateColumns: "1fr 1.4fr",   // droite plus large
+            gap:                 theme.spacing[5],
+            flex:                1,
+          }}
+        >
 
-          {/* ════════════════════════════════
-               COLONNE GAUCHE
-               Résumé document + format + boutons
-              ════════════════════════════════ */}
-          <div style={{
-            backgroundColor: "var(--color-bg-surface)",
-            borderRadius:    theme.radius.lg,
-            border:          "1px solid var(--color-border)",
-            padding:         theme.spacing[5],
-            display:         "flex",
-            flexDirection:   "column",
-            gap:             theme.spacing[4],
-          }}>
-            <h2 style={{ fontSize: theme.fontSize.lg, fontWeight: theme.fontWeight.bold, color: "var(--color-text-primary)", margin: 0 }}>
+          {/* ── COLONNE GAUCHE ─────────────────────
+              Résumé document + statut + boutons  */}
+          <div
+            style={{
+              backgroundColor: colors.bgSurface,  // blanc light / sombre dark
+              borderRadius:    theme.radius.lg,    // 12px
+              border:          `1px solid ${colors.border}`,
+              padding:         theme.spacing[5],   // 20px
+              display:         "flex",
+              flexDirection:   "column",
+              gap:             theme.spacing[4],   // 16px entre les blocs
+            }}
+          >
+            <h2
+              style={{
+                fontSize:   theme.fontSize.lg,
+                fontWeight: theme.fontWeight.bold,
+                color:      colors.textPrimary,
+                margin:     0,
+              }}
+            >
               📋 Document Summary
             </h2>
 
-            {/* Tableau résumé */}
-            <div style={{ border: "1px solid var(--color-border)", borderRadius: theme.radius.md, overflow: "hidden" }}>
+            {/* Tableau résumé — lignes générées dynamiquement */}
+            <div
+              style={{
+                border:       `1px solid ${colors.border}`,
+                borderRadius: theme.radius.md,   // 8px
+                overflow:     "hidden",          // masque les coins des lignes
+              }}
+            >
               {[
                 { label: "Document ID",  value: EXPORT_PREVIEW.document_id    },
                 { label: "Vendor",       value: EXPORT_PREVIEW.vendor_name    },
@@ -192,71 +253,118 @@ export default function DataExport() {
                 { label: "Date",         value: EXPORT_PREVIEW.invoice_date   },
                 { label: "Currency",     value: EXPORT_PREVIEW.currency       },
               ].map((row, i) => (
-                // .map() → génère les lignes dynamiquement
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: `${theme.spacing[2]} ${theme.spacing[3]}`, borderBottom: "1px solid var(--color-border)" }}>
-                  <span style={{ fontSize: theme.fontSize.sm, color: "var(--color-text-secondary)" }}>{row.label}</span>
-                  <span style={{ fontSize: theme.fontSize.sm, fontWeight: theme.fontWeight.medium, color: "var(--color-text-primary)" }}>{row.value}</span>
+                // .map() → génère chaque ligne du tableau
+                <div
+                  key={i}
+                  style={{
+                    display:        "flex",
+                    justifyContent: "space-between",
+                    alignItems:     "center",
+                    padding:        `${theme.spacing[2]} ${theme.spacing[3]}`, // 8px 12px
+                    borderBottom:   `1px solid ${colors.border}`,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: theme.fontSize.sm,
+                      color:    colors.textSecondary,  // gris — label
+                    }}
+                  >
+                    {row.label}
+                  </span>
+                  <span
+                    style={{
+                      fontSize:   theme.fontSize.sm,
+                      fontWeight: theme.fontWeight.medium,
+                      color:      colors.textPrimary,  // foncé — valeur
+                    }}
+                  >
+                    {row.value}
+                  </span>
                 </div>
               ))}
-              {/* Ligne Total — style spécial */}
-              <div style={{ display: "flex", justifyContent: "space-between", padding: `${theme.spacing[2]} ${theme.spacing[3]}`, backgroundColor: "var(--color-bg-app)" }}>
-                <span style={{ fontSize: theme.fontSize.md, fontWeight: theme.fontWeight.bold, color: "var(--color-text-primary)" }}>Total Amount</span>
-                <span style={{ fontSize: theme.fontSize.lg, fontWeight: theme.fontWeight.bold, color: theme.colors.primary }}>${EXPORT_PREVIEW.total.toFixed(2)}</span>
+
+              {/* Ligne Total — mise en valeur visuelle */}
+              <div
+                style={{
+                  display:         "flex",
+                  justifyContent:  "space-between",
+                  padding:         `${theme.spacing[2]} ${theme.spacing[3]}`,
+                  backgroundColor: colors.bgApp,  // fond légèrement différent
+                }}
+              >
+                <span
+                  style={{
+                    fontSize:   theme.fontSize.md,
+                    fontWeight: theme.fontWeight.bold,
+                    color:      colors.textPrimary,
+                  }}
+                >
+                  Total Amount
+                </span>
+                <span
+                  style={{
+                    fontSize:   theme.fontSize.lg,
+                    fontWeight: theme.fontWeight.bold,
+                    color:      colors.primary,   // bleu selon le theme
+                  }}
+                >
+                  ${EXPORT_PREVIEW.total.toFixed(2)}
+                </span>
               </div>
             </div>
 
             {/* Badge statut Approved */}
-            <div style={{ display: "flex", alignItems: "center", gap: theme.spacing[2], backgroundColor: "var(--color-success-bg)", border: "1px solid var(--color-success)", borderRadius: theme.radius.md, padding: `${theme.spacing[2]} ${theme.spacing[3]}` }}>
-              <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "var(--color-success)", flexShrink: 0 }} />
-              <span style={{ fontSize: theme.fontSize.sm, color: "var(--color-success)" }}>
+            <div
+              style={{
+                display:         "flex",
+                alignItems:      "center",
+                gap:             theme.spacing[2],   // 8px
+                backgroundColor: colors.successBg,
+                border:          `1px solid ${colors.success}`,
+                borderRadius:    theme.radius.md,
+                padding:         `${theme.spacing[2]} ${theme.spacing[3]}`,
+              }}
+            >
+              {/* Point vert */}
+              <span
+                style={{
+                  width:           "8px",
+                  height:          "8px",
+                  borderRadius:    theme.radius.round,  // 50%
+                  backgroundColor: colors.success,
+                  flexShrink:      0,
+                }}
+              />
+              <span
+                style={{
+                  fontSize: theme.fontSize.sm,
+                  color:    colors.success,
+                }}
+              >
                 Validation status : <strong>Approved</strong>
               </span>
             </div>
 
-            {/* Sélecteur de format ────────────────
-                3 boutons — celui sélectionné → fond bleu
-                onClick → met à jour selectedFormat     */}
-            <div style={{ display: "flex", flexDirection: "column", gap: theme.spacing[2] }}>
-              <p style={{ fontSize: theme.fontSize.xs, fontWeight: theme.fontWeight.bold, color: "var(--color-text-secondary)", letterSpacing: theme.letterSpacing.wider, margin: 0 }}>
-                SELECT EXPORT FORMAT
-              </p>
-              <div style={{ display: "flex", gap: theme.spacing[2] }}>
-                {(["JSON", "CSV", "XML"] as ExportFormat[]).map((fmt) => (
-                  <button
-                    key={fmt}
-                    onClick={() => setSelectedFormat(fmt)}
-                    style={{
-                      flex:            1,
-                      padding:         theme.spacing[2],
-                      border:          `1.5px solid ${selectedFormat === fmt ? theme.colors.primary : "var(--color-border)"}`,
-                      borderRadius:    theme.radius.md,
-                      fontSize:        theme.fontSize.sm,
-                      fontWeight:      theme.fontWeight.semibold,
-                      cursor:          "pointer",
-                      letterSpacing:   theme.letterSpacing.wide,
-                      // Couleurs dynamiques selon sélection
-                      backgroundColor: selectedFormat === fmt ? theme.colors.primary : "var(--color-bg-surface)",
-                      color:           selectedFormat === fmt ? "#ffffff" : "var(--color-text-primary)",
-                    }}
-                  >
-                    {fmt}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Boutons d'action */}
-            <div style={{ display: "flex", flexDirection: "column", gap: theme.spacing[2] }}>
-              {/* Export — Button remplace <button> natif */}
+            <div
+              style={{
+                display:       "flex",
+                flexDirection: "column",
+                gap:           theme.spacing[2],  // 8px
+              }}
+            >
+              {/* Export — format défini lors de l'upload */}
               <Button
-                label={isExporting ? "Exporting..." : `⬇ Export as ${selectedFormat}`}
+                label={isExporting ? "Exporting..." : "⬇ Export"}
                 variant="primary"
                 size="md"
                 fullWidth
                 onClick={handleExport}
                 disabled={isExporting}
               />
-              {/* Nouveau document */}
+
+              {/* Nouveau document → retour Upload */}
               <Button
                 label="+ New Document"
                 variant="secondary"
@@ -267,45 +375,66 @@ export default function DataExport() {
             </div>
           </div>
 
-          {/* ════════════════════════════════
-               COLONNE DROITE — Preview
-               Contenu du fichier avant export
-              ════════════════════════════════ */}
-          <div style={{
-            backgroundColor: "var(--color-bg-surface)",
-            borderRadius:    theme.radius.lg,
-            border:          "1px solid var(--color-border)",
-            padding:         theme.spacing[5],
-            display:         "flex",
-            flexDirection:   "column",
-          }}>
-            <h2 style={{ fontSize: theme.fontSize.lg, fontWeight: theme.fontWeight.bold, color: "var(--color-text-primary)", margin: `0 0 ${theme.spacing[2]}` }}>
-              <span style={{ fontSize: theme.fontSize.sm, color: "var(--color-text-secondary)", fontFamily: "var(--font-mono)" }}>
-                &lt;/&gt;{" "}
+          {/* ── COLONNE DROITE — Preview ───────────
+              Aperçu du fichier avant export
+              Fond sombre fixe style terminal      */}
+          <div
+            style={{
+              backgroundColor: colors.bgSurface,
+              borderRadius:    theme.radius.lg,
+              border:          `1px solid ${colors.border}`,
+              padding:         theme.spacing[5],
+              display:         "flex",
+              flexDirection:   "column",
+              gap:             theme.spacing[3],
+            }}
+          >
+            <h2
+              style={{
+                fontSize:   theme.fontSize.lg,
+                fontWeight: theme.fontWeight.bold,
+                color:      colors.textPrimary,
+                margin:     0,
+              }}
+            >
+              {/* Icône code */}
+              <span
+                style={{
+                  fontSize:   theme.fontSize.sm,
+                  color:      colors.textSecondary,
+                  fontFamily: theme.fontFamily.mono,
+                }}
+              >
+                {"</>"}{" "}
               </span>
-              Preview — {selectedFormat}
+              Preview
             </h2>
 
-            {/* Bloc de prévisualisation — fond sombre type terminal */}
-            <div style={{
-              flex:            1,
-              backgroundColor: "#1e1e2e",
-              borderRadius:    theme.radius.md,
-              padding:         theme.spacing[4],
-              overflow:        "auto",
-              minHeight:       "400px",
-            }}>
-              {/* pre → préserve l'indentation du JSON/CSV/XML */}
-              <pre style={{
-                margin:     0,
-                fontSize:   theme.fontSize.sm,
-                lineHeight: "1.7",
-                fontFamily: "var(--font-mono)",
-                color:      "#cdd6f4",
-                whiteSpace: "pre-wrap",
-                wordBreak:  "break-word",
-              }}>
-                {getPreviewContent()}
+            {/* Bloc terminal — fond sombre fixe (style éditeur de code)
+                Les couleurs fixes ici sont intentionnelles —
+                un terminal reste sombre même en mode light         */}
+            <div
+              style={{
+                flex:            1,
+                backgroundColor: "#1e1e2e",     // fond sombre fixe — style terminal
+                borderRadius:    theme.radius.md,
+                padding:         theme.spacing[4],
+                overflow:        "auto",
+                minHeight:       "400px",
+              }}
+            >
+              <pre
+                style={{
+                  margin:     0,
+                  fontSize:   theme.fontSize.sm,
+                  lineHeight: "1.7",
+                  fontFamily: theme.fontFamily.mono,  // police monospace
+                  color:      "#cdd6f4",              // blanc cassé fixe sur fond sombre
+                  whiteSpace: "pre-wrap",
+                  wordBreak:  "break-word",
+                }}
+              >
+                {JSON.stringify(EXPORT_PREVIEW, null, 2)}
               </pre>
             </div>
           </div>

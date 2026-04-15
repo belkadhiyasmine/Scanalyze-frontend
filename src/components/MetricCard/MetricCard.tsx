@@ -2,11 +2,28 @@
 //  components/MetricCard/MetricCard.tsx
 //  Child Component — utilisé 4 fois dans Dashboard
 //  Affiche une métrique avec valeur et tendance
+//  Connecté au système de theme (light/dark)
 // ─────────────────────────────────────────────
 
-import { MetricCardProps } from "../../types";
+import { useTheme }        from "../../themes/ThemeContext"
+import { spacing, radius } from "../../themes/spacing"
 
 // ─────────────────────────────────────────────
+//  INTERFACE DES PROPS
+// ─────────────────────────────────────────────
+
+interface MetricCardProps {
+  label:   string           // titre de la métrique   ex : "Documents traités"
+  value:   string           // valeur principale       ex : "1 284"
+  trend:   string           // texte de tendance       ex : "+12% ce mois"
+  trendUp: boolean          // true = hausse (vert) / false = baisse (rouge)
+  icon:    React.ReactNode  // icône affichée en haut à droite
+}
+
+// ─────────────────────────────────────────────
+//  COMPOSANT PRINCIPAL
+// ─────────────────────────────────────────────
+
 export default function MetricCard({
   label,
   value,
@@ -14,65 +31,87 @@ export default function MetricCard({
   trendUp,
   icon,
 }: MetricCardProps) {
+
+  // ── Lecture du theme actif ─────────────────
+  // Retourne le theme complet (light ou dark)
+  // selon le choix sauvegardé dans localStorage
+  const { theme } = useTheme()
+
+  // Raccourci pour éviter de répéter "theme.colors" partout
+  const colors = theme.colors
+
   return (
-    <div style={styles.card}>
+    <div
+      style={{
+        backgroundColor: colors.bgSurface,   // blanc light / gris foncé dark
+        borderRadius:    radius.lg,           // 12px — grandes cards
+        border:          `1px solid ${colors.border}`, // bordure selon le theme
+        padding:         spacing[5],          // 20px
+      }}
+    >
 
-      {/* ── En-tête : label + icône ── */}
-      <div style={styles.header}>
-        <span style={styles.label}>{label}</span>
-        <span style={styles.icon}>{icon}</span>
-      </div>
-
-      {/* ── Valeur principale ── */}
-      <p style={styles.value}>{value}</p>
-
-      {/* ── Tendance colorée ── */}
-      <p
+      {/* ── En-tête : label + icône ────────────
+          Label à gauche, icône à droite       */}
+      <div
         style={{
-          ...styles.trend,
-          color: trendUp ? "#16a34a" : "#dc2626",
+          display:        "flex",
+          justifyContent: "space-between",
+          alignItems:     "center",
+          marginBottom:   spacing[2],         // 8px
         }}
       >
+        {/* Label de la métrique — petit texte gris en majuscules */}
+        <span
+          style={{
+            fontSize:      theme.fontSize.xs,        // petit — depuis typography.ts
+            fontWeight:    theme.fontWeight.semibold, // semi-gras
+            color:         colors.textSecondary,      // gris selon le theme
+            letterSpacing: theme.letterSpacing.wide,  // espacement depuis typography.ts
+          }}
+        >
+          {label}
+        </span>
+
+        {/* Icône en haut à droite */}
+        <span
+          style={{
+            display:    "flex",
+            alignItems: "center",
+          }}
+        >
+          {icon}
+        </span>
+      </div>
+
+      {/* ── Valeur principale ──────────────────
+          Chiffre mis en avant — grande taille  */}
+      <p
+        style={{
+          fontSize:   "28px",                      // taille fixe — pas dans typography.ts
+          fontWeight: theme.fontWeight.bold,        // gras — depuis typography.ts
+          color:      colors.textPrimary,           // titre foncé selon le theme
+          margin:     `0 0 ${spacing[1]}`,          // 0 haut, 0 côtés, 4px bas
+        }}
+      >
+        {value}
+      </p>
+
+      {/* ── Tendance colorée ───────────────────
+          Vert si hausse (trendUp = true)
+          Rouge si baisse (trendUp = false)     */}
+      <p
+        style={{
+          fontSize:   theme.fontSize.sm,            // 13-14px depuis typography.ts
+          fontWeight: theme.fontWeight.medium,       // depuis typography.ts
+          // Vert succès ou rouge erreur selon le theme
+          color:      trendUp ? colors.success : colors.error,
+          margin:     0,
+        }}
+      >
+        {/* Flèche haut ou bas selon la tendance */}
         {trendUp ? "↑" : "↓"} {trend}
       </p>
 
     </div>
-  );
+  )
 }
-
-// ── Styles ────────────────────────────────────
-const styles: { [key: string]: React.CSSProperties } = {
-  card: {
-    backgroundColor: "#ffffff",
-    borderRadius: "12px",
-    border: "1px solid #e5e7eb",
-    padding: "20px",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "10px",
-  },
-  label: {
-    fontSize: "11px",
-    fontWeight: "600",
-    color: "#9ca3af",
-    letterSpacing: "0.5px",
-  },
-  icon: {
-    display: "flex",
-    alignItems: "center",
-  },
-  value: {
-    fontSize: "28px",
-    fontWeight: "700",
-    color: "#111827",
-    margin: "0 0 6px",
-  },
-  trend: {
-    fontSize: "13px",
-    fontWeight: "500",
-    margin: 0,
-  },
-};

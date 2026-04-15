@@ -1,13 +1,272 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ─────────────────────────────────────────────
+   src/index.css
+   Styles globaux de base pour toute l'app
+   → Reset navigateur
+   → CSS Variables light + dark
+   → Fonts
+   → Styles de base
+   ───────────────────────────────────────────── */
+
+/* ── Google Fonts ────────────────────────────
+   Inter         → font principale de l'app
+   JetBrains Mono → font pour les codes/tokens
+   display=swap  → affiche la font système
+                   pendant le chargement        */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ─────────────────────────────────────────────
+   CSS VARIABLES — LIGHT MODE (défaut)
+   :root → s'applique à tout le document HTML
+   Synchronisées avec themes/colors.ts
+   ───────────────────────────────────────────── */
+:root {
+
+  /* ── Brand ──────────────────────────────────
+     Couleur principale de Scanalyze            */
+  --color-primary:        #1a3a8f;  /* bleu marine — boutons, actif   */
+  --color-primary-hover:  #1d4ed8;  /* bleu hover                     */
+  --color-primary-light:  #eff6ff;  /* bleu très clair — highlights   */
+
+  /* ── Fonds ───────────────────────────────────
+     Deux niveaux de fond pour la profondeur    */
+  --color-bg-app:         #f9fafb;  /* fond de toute l'app            */
+  --color-bg-surface:     #ffffff;  /* cards, sidebar, modals         */
+  --color-bg-hover:       #f3f4f6;  /* hover sur nav items            */
+  --color-bg-input:       #ffffff;  /* fond des inputs                */
+
+  /* ── Textes ──────────────────────────────────
+     Hiérarchie visuelle via les couleurs       */
+  --color-text-primary:   #111827;  /* titres, valeurs importantes    */
+  --color-text-secondary: #6b7280;  /* labels, descriptions           */
+  --color-text-disabled:  #d1d5db;  /* texte désactivé                */
+  --color-text-inverse:   #ffffff;  /* texte sur fond bleu            */
+
+  /* ── Bordures ────────────────────────────────*/
+  --color-border:         #e5e7eb;  /* bordures normales              */
+  --color-border-focus:   #1a3a8f;  /* bordure input au focus         */
+  --color-border-strong:  #d1d5db;  /* bordures marquées              */
+
+  /* ── Statuts ─────────────────────────────────
+     Utilisés dans StatusBadge, Toast, alerts   */
+  --color-success:        #16a34a;  /* texte vert                     */
+  --color-success-bg:     #dcfce7;  /* fond vert clair                */
+  --color-error:          #dc2626;  /* texte rouge                    */
+  --color-error-bg:       #fef2f2;  /* fond rouge clair               */
+  --color-warning:        #ea580c;  /* texte orange                   */
+  --color-warning-bg:     #fff7ed;  /* fond orange clair              */
+
+  /* ── Sidebar ─────────────────────────────────*/
+  --color-sidebar-bg:     #ffffff;
+  --color-sidebar-active: #1a3a8f;  /* fond item actif                */
+  --color-sidebar-text:   #64748b;  /* texte items inactifs           */
+
+  /* ── Ombres ──────────────────────────────────*/
+  --shadow-sm:   0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md:   0 4px 6px rgba(0,0,0,0.07);
+  --shadow-lg:   0 10px 15px rgba(0,0,0,0.10);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.08);  /* cards dashboard      */
+
+  /* ── Typography ──────────────────────────────*/
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+
+  /* ── Border radius ───────────────────────────*/
+  --radius-sm:   4px;   /* petits éléments                           */
+  --radius-md:   8px;   /* boutons, inputs, cards                    */
+  --radius-lg:   12px;  /* grandes cards (MetricCard)                */
+  --radius-xl:   16px;  /* modals                                    */
+  --radius-full: 99px;  /* badges, pills (StatusBadge)               */
+  --radius-round:50%;   /* avatars (Sidebar)                         */
+
+  /* ── Dimensions fixes ────────────────────────*/
+  --sidebar-width:  220px;  /* largeur Sidebar                       */
+  --header-height:  64px;
+  --input-height:   40px;
+
+  /* ── Transitions ─────────────────────────────
+     Durées standard pour les animations        */
+  --transition-fast:   0.1s ease;
+  --transition-normal: 0.15s ease;
+  --transition-slow:   0.3s ease;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* ─────────────────────────────────────────────
+   CSS VARIABLES — DARK MODE
+   [data-theme="dark"] → activé par ThemeContext.tsx
+   document.documentElement.setAttribute("data-theme", "dark")
+   Écrase les variables du :root automatiquement
+   ───────────────────────────────────────────── */
+[data-theme="dark"] {
+
+  /* ── Brand ───────────────────────────────────
+     Bleu plus clair — visible sur fond sombre  */
+  --color-primary:        #3b82f6;
+  --color-primary-hover:  #bfdbfe;
+  --color-primary-light:  #1e3a5f;
+
+  /* ── Fonds ───────────────────────────────────
+     Bleu nuit profond                          */
+  --color-bg-app:         #0f172a;  /* fond principal — bleu très sombre */
+  --color-bg-surface:     #1e293b;  /* cards, sidebar                    */
+  --color-bg-hover:       #334155;  /* hover                             */
+  --color-bg-input:       #1e293b;  /* fond inputs                       */
+
+  /* ── Textes ──────────────────────────────────*/
+  --color-text-primary:   #f1f5f9;  /* blanc cassé — titres              */
+  --color-text-secondary: #94a3b8;  /* gris clair — labels               */
+  --color-text-disabled:  #475569;  /* gris foncé — désactivé            */
+  --color-text-inverse:   #ffffff;
+
+  /* ── Bordures ────────────────────────────────*/
+  --color-border:         #334155;
+  --color-border-focus:   #3b82f6;
+  --color-border-strong:  #475569;
+
+  /* ── Statuts ─────────────────────────────────
+     Plus lumineux pour être visibles sur dark  */
+  --color-success:        #4ade80;
+  --color-success-bg:     #052e16;
+  --color-error:          #f87171;
+  --color-error-bg:       #450a0a;
+  --color-warning:        #fb923c;
+  --color-warning-bg:     #431407;
+
+  /* ── Sidebar ─────────────────────────────────*/
+  --color-sidebar-bg:     #1e293b;
+  --color-sidebar-active: #3b82f6;
+  --color-sidebar-text:   #94a3b8;
+
+  /* ── Ombres ──────────────────────────────────
+     Plus marquées sur fond sombre              */
+  --shadow-sm:   0 1px 2px rgba(0,0,0,0.30);
+  --shadow-md:   0 4px 6px rgba(0,0,0,0.40);
+  --shadow-lg:   0 10px 15px rgba(0,0,0,0.50);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.30);
+}
+
+/* ─────────────────────────────────────────────
+   RESET UNIVERSEL
+   Supprime marges/paddings par défaut
+   du navigateur sur tous les éléments
+   ───────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;  /* padding inclus dans la largeur          */
+  margin:     0;           /* supprime les marges par défaut          */
+  padding:    0;           /* supprime les paddings par défaut        */
+}
+
+/* ─────────────────────────────────────────────
+   BASE HTML
+   ───────────────────────────────────────────── */
+html {
+  font-size: 16px;         /* base pour les unités rem                */
+}
+
+/* ─────────────────────────────────────────────
+   BODY
+   ───────────────────────────────────────────── */
+body {
+  font-family:             var(--font-primary);  /* Inter              */
+  background-color:        var(--color-bg-app);  /* s'adapte au theme  */
+  color:                   var(--color-text-primary);
+  -webkit-font-smoothing:  antialiased;  /* rendu lisse sur Chrome/Safari */
+  -moz-osx-font-smoothing: grayscale;   /* rendu lisse sur Firefox        */
+  line-height:             1.5;
+}
+
+/* ─────────────────────────────────────────────
+   CODE / MONOSPACE
+   JetBrains Mono pour les tokens, données tech
+   ───────────────────────────────────────────── */
+code,
+pre,
+kbd {
+  font-family: var(--font-mono);
+}
+
+/* ─────────────────────────────────────────────
+   IMAGES & SVG
+   Ne débordent jamais de leur conteneur
+   ───────────────────────────────────────────── */
+img,
+svg {
+  display:   block;
+  max-width: 100%;
+}
+
+/* ─────────────────────────────────────────────
+   BOUTONS
+   Reset complet — nos composants Button
+   gèrent leurs propres styles
+   ───────────────────────────────────────────── */
+button {
+  font-family: inherit;  /* hérite Inter du body                      */
+  cursor:      pointer;
+  border:      none;
+  background:  none;
+  padding:     0;
+}
+
+/* ─────────────────────────────────────────────
+   INPUTS / TEXTAREA / SELECT
+   Héritent de la font de l'app
+   ───────────────────────────────────────────── */
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size:   inherit;
+  outline:     none;   /* géré dans le composant TextInput            */
+}
+
+/* ─────────────────────────────────────────────
+   LIENS
+   Pas de soulignement ni couleur imposée
+   ───────────────────────────────────────────── */
+a {
+  text-decoration: none;
+  color:           inherit;
+}
+
+/* ─────────────────────────────────────────────
+   LISTES
+   Supprime puces et marges par défaut
+   ───────────────────────────────────────────── */
+ul,
+ol {
+  list-style: none;
+}
+
+/* ─────────────────────────────────────────────
+   SCROLLBAR CUSTOM
+   Fine et discrète — style moderne
+   Fonctionne sur Chrome, Edge, Safari
+   ───────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width:  6px;   /* scrollbar verticale                               */
+  height: 6px;   /* scrollbar horizontale                             */
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-hover);  /* fond de la piste             */
+}
+
+::-webkit-scrollbar-thumb {
+  background:    var(--color-border-strong);  /* curseur              */
+  border-radius: 99px;                        /* arrondi              */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-disabled);  /* plus foncé au hover    */
+}
+
+/* ─────────────────────────────────────────────
+   SÉLECTION DE TEXTE
+   Couleur cohérente avec le brand Scanalyze
+   ───────────────────────────────────────────── */
+::selection {
+  background-color: var(--color-primary-light);  /* bleu clair        */
+  color:            var(--color-primary);         /* bleu marine       */
 }
